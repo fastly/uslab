@@ -1,0 +1,4 @@
+ * Possibly embed ABA counter in first_free so we can do CAS instead of CAS2.
+ * Investigate use of rings in conjunction with madvise(2) or fallocate(2) to
+   allow releasing pages back to OS
+ * Port to other OSes

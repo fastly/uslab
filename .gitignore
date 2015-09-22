@@ -1,0 +1,7 @@
+*.o
+*.a
+*.so
+.*.swp
+uslab_bench
+uslab_test
+jemalloc
