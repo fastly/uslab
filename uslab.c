@@ -125,6 +125,16 @@ uslab_create_anonymous(void *base, size_t size_class, uint64_t nelem,
 	return a;
 }
 
+static void
+uslab_close_fd(int fd)
+{
+	int r;
+
+	do {
+		r = close(fd);
+	} while (r == -1 && errno == EINTR);
+}
+
 struct uslab *
 uslab_create_ramdisk(const char *path, void *base, size_t size_class,
     uint64_t nelem, uint64_t npt_slabs)
@@ -145,14 +155,40 @@ uslab_create_ramdisk(const char *path, void *base, size_t size_class,
 	r = stat(path, &sb);
 	if (r == -1 && errno == ENOENT) {
 		const char z = 0;
+		ssize_t s;
+		off_t o;
+		int e;
 
 		if ((fd = open(path, O_CREAT | O_RDWR, S_IRUSR | S_IWUSR)) == -1) {
 			return NULL;
 		}
 
-		lseek(fd, (2 * PAGE_SIZE) + (nelem * size_class) - 1, SEEK_SET);
-		write(fd, &z, 1);
-		lseek(fd, 0, SEEK_SET);
+		o = lseek(fd, (2 * PAGE_SIZE) + (nelem * size_class) - 1, SEEK_SET);
+		if (o == -1) {
+			e = errno;
+			uslab_close_fd(fd);
+			errno = e;
+			return NULL;
+		}
+
+		do {
+			s = write(fd, &z, 1);
+		} while (s == -1 && errno == EINTR);
+
+		if (s == -1) {
+			e = errno;
+			uslab_close_fd(fd);
+			errno = e;
+			return NULL;
+		}
+
+		o = lseek(fd, 0, SEEK_SET);
+		if (o == -1) {
+			e = errno;
+			uslab_close_fd(fd);
+			errno = e;
+			return NULL;
+		}
 
 		sb.st_size = (2 * PAGE_SIZE) + (nelem * size_class);
 	} else {
@@ -168,7 +204,7 @@ uslab_create_ramdisk(const char *path, void *base, size_t size_class,
 	}
 
 	map = mmap(base, sb.st_size, PROT_READ | PROT_WRITE, mflags, fd, 0);
-	close(fd);
+	uslab_close_fd(fd);
 
 	if (map == MAP_FAILED) {
 		return NULL;
