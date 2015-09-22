@@ -32,6 +32,12 @@ we're paused reading. If at least 1 free occurs before the winning thread
 frees the paused thread's `slab->first_free`, `slab->first_free->next_free`
 will no longer be consistent and the stack will be corrupted.
 
+## Building
+
+Uslab has been tested on Linux and requires
+[Concurrency Kit](http://concurrencykit.org) to build. To build, run `make`.
+It is not designed to be a drop-in memory allocator replacement.
+
 ## API
 
 ### struct uslab_pt
