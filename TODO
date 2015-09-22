@@ -2,3 +2,5 @@
  * Investigate use of rings in conjunction with madvise(2) or fallocate(2) to
    allow releasing pages back to OS
  * Port to other OSes
+ * Investigate performance changing division to bit shift when possible.
+ * Investigate and improve performance on architectures other than x86_64.
